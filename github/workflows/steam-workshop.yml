@@ -1,0 +1,36 @@
+name: Steam Workshop Download
+
+on:
+  workflow_dispatch:
+    inputs:
+      appid:
+        description: 'Steam AppID'
+        default: '4000'
+      itemid:
+        description: 'Workshop Item ID'
+        default: '3362666358'
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install SteamCMD
+        run: |
+          sudo add-apt-repository multiverse -y
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          echo steam steam/question select "I AGREE" | sudo debconf-set-selections
+          echo steam steam/license note '' | sudo debconf-set-selections
+          sudo apt-get install -y steamcmd
+
+      - name: Download Workshop Item
+        run: |
+          /usr/games/steamcmd +login anonymous \
+            +workshop_download_item ${{ github.event.inputs.appid }} ${{ github.event.inputs.itemid }} \
+            +quit
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workshop-item-${{ github.event.inputs.itemid }}
+          path: /home/runner/Steam/steamapps/workshop/content/${{ github.event.inputs.appid }}/${{ github.event.inputs.itemid }}
