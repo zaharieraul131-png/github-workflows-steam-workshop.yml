@@ -5,10 +5,10 @@ on:
     inputs:
       appid:
         description: 'Steam AppID'
-        default: '4000'
+        default: '220'
       itemid:
         description: 'Workshop Item ID'
-        default: '3362666358'
+        default: '3668158020'
 
 jobs:
   download:
@@ -25,7 +25,7 @@ jobs:
 
       - name: Download Workshop Item
         run: |
-          /usr/games/steamcmd +login anonymous \
+          /usr/games/steamcmd +login ${{ secrets.STEAM_USER }} ${{ secrets.STEAM_PASS }} \
             +workshop_download_item ${{ github.event.inputs.appid }} ${{ github.event.inputs.itemid }} \
             +quit
 
