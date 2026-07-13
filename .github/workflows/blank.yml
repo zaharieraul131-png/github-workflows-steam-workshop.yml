@@ -29,9 +29,22 @@ jobs:
             +workshop_download_item ${{ github.event.inputs.appid }} ${{ github.event.inputs.itemid }} \
             +quit
 
-      - name: Upload as artifact
+      - name: Get gmad extractor (via GMod Dedicated Server)
+        run: |
+          /usr/games/steamcmd +login anonymous \
+            +app_update 4020 validate \
+            +quit
+
+      - name: Extract .gma to loose files
+        run: |
+          find /home/runner/.local/share/Steam/steamapps/common -iname "gmad_linux64" -exec chmod +x {} \;
+          GMAD=$(find /home/runner/.local/share/Steam/steamapps/common -iname "gmad_linux64")
+          GMA_FILE=$(find /home/runner/.local/share/Steam/steamapps/workshop/content/${{ github.event.inputs.appid }}/${{ github.event.inputs.itemid }} -iname "*.gma")
+          mkdir -p extracted
+          "$GMAD" extract -file "$GMA_FILE" -out extracted
+
+      - name: Upload extracted files
         uses: actions/upload-artifact@v4
         with:
-          name: workshop-item-${{ github.event.inputs.itemid }}
-          path: /home/runner/.local/share/Steam/steamapps/workshop/content/4000/3362666358
-          
+          name: extracted-${{ github.event.inputs.itemid }}
+          path: extracted
