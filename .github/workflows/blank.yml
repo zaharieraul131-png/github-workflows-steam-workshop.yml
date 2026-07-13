@@ -29,67 +29,8 @@ jobs:
             +workshop_download_item ${{ github.event.inputs.appid }} ${{ github.event.inputs.itemid }} \
             +quit
 
-      - name: Write GMA extractor script
-        run: |
-          cat > extract_gma.py << 'PYEOF'
-          import struct, os, sys
-
-          def read_cstring(f):
-              result = bytearray()
-              while True:
-                  b = f.read(1)
-                  if not b or b == b'\x00':
-                      break
-                  result += b
-              return result.decode('utf-8', errors='replace')
-
-          def extract_gma(path, outdir):
-              with open(path, 'rb') as f:
-                  ident = f.read(4)
-                  if ident != b'GMAD':
-                      raise ValueError("Not a valid GMA file")
-                  version = f.read(1)[0]
-                  f.read(8)  # steamid
-                  f.read(8)  # timestamp
-                  if version > 1:
-                      while read_cstring(f) != "":
-                          pass
-                  read_cstring(f)  # name
-                  read_cstring(f)  # description
-                  read_cstring(f)  # author
-                  struct.unpack('<i', f.read(4))[0]  # addon version
-
-                  files = []
-                  while True:
-                      file_number = struct.unpack('<i', f.read(4))[0]
-                      if file_number == 0:
-                          break
-                      file_name = read_cstring(f)
-                      file_size = struct.unpack('<q', f.read(8))[0]
-                      f.read(4)  # crc
-                      files.append((file_name, file_size))
-
-                  os.makedirs(outdir, exist_ok=True)
-                  for file_name, file_size in files:
-                      data = f.read(file_size)
-                      full_path = os.path.join(outdir, file_name)
-                      os.makedirs(os.path.dirname(full_path), exist_ok=True)
-                      with open(full_path, 'wb') as out:
-                          out.write(data)
-                      print(f"Extracted: {file_name} ({file_size} bytes)")
-
-          if __name__ == "__main__":
-              extract_gma(sys.argv[1], sys.argv[2])
-          PYEOF
-
-      - name: Extract .gma to loose files
-        run: |
-          GMA_FILE=$(find /home/runner/.local/share/Steam/steamapps/workshop/content/${{ github.event.inputs.appid }}/${{ github.event.inputs.itemid }} -iname "*.gma")
-          echo "Found GMA: $GMA_FILE"
-          python3 extract_gma.py "$GMA_FILE" extracted
-
-      - name: Upload extracted files
+      - name: Upload as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: extracted-${{ github.event.inputs.itemid }}
-          path: extracted
+          name: workshop-item-${{ github.event.inputs.itemid }}
+          path: /home/runner/.local/share/Steam/steamapps/workshop/content/${{ github.event.inputs.appid }}/${{ github.event.inputs.itemid }}
