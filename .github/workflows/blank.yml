@@ -33,4 +33,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: workshop-item-${{ github.event.inputs.itemid }}
-          path: /home/runner/.local/share/Steam/steamapps/workshop/content/4000/3362666358
+          path: /home/runner/.local/share/Steam/steamapps/workshop/content/220/3372678921
